@@ -2,6 +2,7 @@ module Lib where
 
 import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Interact
+import System.Random
 
 type Pos = (Int, Int)
 
@@ -13,6 +14,8 @@ data Mundo = Estado {
     cobra :: [Pos]
   , direcao :: Direcao
   , contFrames :: Int
+  , randomGen :: StdGen
+  , comida :: Pos
 } deriving Show
 
 (+>) :: Pos -> Direcao -> Pos
@@ -27,6 +30,8 @@ mundoInicial = Estado {
     cobra = [(0,0), (0,-1), (0,-2)]
   , direcao = Parado
   , contFrames = 0
+  , randomGen = mkStdGen 0
+  , comida = (0,0)
 }
 
 linhas :: Num a => a
@@ -54,7 +59,7 @@ desenhaSegmento (x,y) = translate (fromIntegral x * tamSegmt) (fromIntegral y * 
 
 
 desenhaMundo :: Mundo -> Picture
-desenhaMundo m = pictures $ map desenhaSegmento (cobra m)
+desenhaMundo m = pictures $ desenhaComida m : map desenhaSegmento (cobra m)
 
 
 tratarEvento :: Event -> Mundo -> Mundo
@@ -80,12 +85,32 @@ oposto Oeste = Leste
 oposto Parado = Parado
 
 atualizaMundo :: Float -> Mundo -> Mundo
-atualizaMundo _ est@(Estado cob dir fra )
-    | fra `mod` acaoFrames == 0 = Estado novaCobra dir (fra + 1)
+atualizaMundo _ est@(Estado cob dir fra rand com)
+    | fra `mod` acaoFrames == 0 = Estado novaCobra dir (fra + 1) novoRandom novaComida
     | otherwise = est {contFrames = fra + 1}
     where
-        novaCobra = movimentaCobra cob dir
+        novaCobra = atualizaCobra cob dir com
+        (novaComida, novoRandom) = atualizaComida rand com novaCobra
 
+atualizaComida :: StdGen -> Pos -> [Pos] -> (Pos, StdGen)
+atualizaComida g com cob = if com == head cob 
+                           then novaComida cob g
+                           else (com, g)
+
+novaComida :: [Pos] -> StdGen -> (Pos, StdGen)
+novaComida cob gen = if (x, y) `notElem` cob then ((x, y), stdGen3) else novaComida cob stdGen3
+                     where
+                       (x, stdGen2) = randomR (-limite, limite) gen
+                       (y, stdGen3) = randomR (-limite, limite) stdGen2
+
+atualizaCobra :: [Pos] -> Direcao -> Pos -> [Pos]
+atualizaCobra cob Parado _ = cob
+atualizaCobra cob d com    
+    | com == novaPosicao = novaPosicao : cob
+    | otherwise = novaPosicao : init cob
+    where
+        novaCabeca = head cob +> d
+        novaPosicao = reposicionaCabeca novaCabeca
 
 movimentaCobra :: [Pos] -> Direcao -> [Pos]
 movimentaCobra cob Parado = cob
@@ -101,3 +126,8 @@ reposicionaCabeca (x,y)
     | y < -limite = (x, limite)
     | y > limite = (x, -limite)
     | otherwise = (x,y)
+
+
+desenhaComida :: Mundo -> Picture
+desenhaComida (Estado cob dir fra rand (x,y)) = 
+  translate (fromIntegral x * tamSegmt) (fromIntegral y * tamSegmt) $ color red $ circleSolid (tamSegmt / 2 + 1)

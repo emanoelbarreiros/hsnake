@@ -16,8 +16,6 @@ data Mundo = Estado {
   , contFrames :: Int
   , randomGen :: StdGen
   , comida :: Pos
-  , bola :: (Float,Float)
-  , bolaCriada :: Bool
 } deriving Show
 
 (+>) :: Pos -> Direcao -> Pos
@@ -34,8 +32,6 @@ mundoInicial = Estado {
   , contFrames = 0
   , randomGen = mkStdGen 0
   , comida = (0,0)
-  , bola = (0,0)
-  , bolaCriada = False
 }
 
 linhas :: Num a => a
@@ -63,7 +59,7 @@ desenhaSegmento (x,y) = translate (fromIntegral x * tamSegmt) (fromIntegral y * 
 
 
 desenhaMundo :: Mundo -> Picture
-desenhaMundo m = pictures $ desenhaBola m : desenhaComida m : map desenhaSegmento (cobra m)
+desenhaMundo m = pictures $ desenhaComida m : map desenhaSegmento (cobra m)
 
 desenhaBola :: Mundo -> Picture
 desenhaBola m = if bolaCriada m then uncurry translate (bola m) $ circleSolid 20 else Blank
@@ -74,7 +70,7 @@ tratarEvento (EventKey (SpecialKey KeyUp) Down _ _) m = m {direcao = novaDirecao
 tratarEvento (EventKey (SpecialKey KeyDown) Down _ _) m = m {direcao = novaDirecao (direcao m) Sul }
 tratarEvento (EventKey (SpecialKey KeyLeft) Down _ _) m = m {direcao = novaDirecao (direcao m) Oeste }
 tratarEvento (EventKey (SpecialKey KeyRight) Down _ _) m = m {direcao = novaDirecao (direcao m) Leste }
-tratarEvento (EventKey (MouseButton LeftButton) Down _ (x,y)) m = m {bola = (x,y), bolaCriada = True }
+--tratarEvento (EventKey (MouseButton LeftButton) Down _ (x,y)) m = m {bola = (x,y), bolaCriada = True }
 tratarEvento _ m = m
 
 
@@ -93,8 +89,8 @@ oposto Oeste = Leste
 oposto Parado = Parado
 
 atualizaMundo :: Float -> Mundo -> Mundo
-atualizaMundo _ est@(Estado cob dir fra rand com bola bc)
-    | fra `mod` acaoFrames == 0 = Estado novaCobra dir (fra + 1) novoRandom novaComida bola bc
+atualizaMundo _ est@(Estado cob dir fra rand com)
+    | fra `mod` acaoFrames == 0 = Estado novaCobra dir (fra + 1) novoRandom novaComida
     | otherwise = est {contFrames = fra + 1}
     where
         novaCobra = atualizaCobra cob dir com
@@ -137,5 +133,5 @@ reposicionaCabeca (x,y)
 
 
 desenhaComida :: Mundo -> Picture
-desenhaComida (Estado cob dir fra rand (x,y) _ _) =
+desenhaComida (Estado _ _ _ _ (x,y)) =
   translate (fromIntegral x * tamSegmt) (fromIntegral y * tamSegmt) $ color red $ circleSolid (tamSegmt / 2 + 1)

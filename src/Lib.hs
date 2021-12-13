@@ -61,16 +61,12 @@ desenhaSegmento (x,y) = translate (fromIntegral x * tamSegmt) (fromIntegral y * 
 desenhaMundo :: Mundo -> Picture
 desenhaMundo m = pictures $ desenhaComida m : map desenhaSegmento (cobra m)
 
-desenhaBola :: Mundo -> Picture
-desenhaBola m = if bolaCriada m then uncurry translate (bola m) $ circleSolid 20 else Blank
-
 
 tratarEvento :: Event -> Mundo -> Mundo
 tratarEvento (EventKey (SpecialKey KeyUp) Down _ _) m = m {direcao = novaDirecao (direcao m) Norte }
 tratarEvento (EventKey (SpecialKey KeyDown) Down _ _) m = m {direcao = novaDirecao (direcao m) Sul }
 tratarEvento (EventKey (SpecialKey KeyLeft) Down _ _) m = m {direcao = novaDirecao (direcao m) Oeste }
 tratarEvento (EventKey (SpecialKey KeyRight) Down _ _) m = m {direcao = novaDirecao (direcao m) Leste }
---tratarEvento (EventKey (MouseButton LeftButton) Down _ (x,y)) m = m {bola = (x,y), bolaCriada = True }
 tratarEvento _ m = m
 
 

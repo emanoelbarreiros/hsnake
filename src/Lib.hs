@@ -19,6 +19,7 @@ data Mundo = Estado {
   , comida :: Pos
   , modo :: Modo
   , tempo :: Float
+  , qtdComidas :: Int
 } deriving Show
 
 (+>) :: Pos -> Direcao -> Pos
@@ -37,6 +38,7 @@ mundoInicial = Estado {
   , comida = (0,0)
   , modo = Inicio
   , tempo = 0.0
+  , qtdComidas = 0
 }
 
 linhas :: Num a => a
@@ -64,11 +66,24 @@ desenhaSegmento (x,y) = translate (fromIntegral x * tamSegmt) (fromIntegral y * 
 
 
 desenhaMundo :: Mundo -> Picture
-desenhaMundo m = pictures $ [desenhaComida,  desenhaCobra, desenhaRelogio] <*> pure m
+desenhaMundo m = pictures $ [desenhaComida,  desenhaCobra, desenhaRelogio, desenhaEstatisticas] <*> pure m
 
 
 desenhaRelogio :: Mundo -> Picture
-desenhaRelogio (Estado _ _ _ _ _ modo temp) = translate (-(tamJanela / 2 - 10)) (tamJanela / 2 - 20) (scale 0.1 0.1 (text $ printf "%.2f s" temp)) 
+desenhaRelogio (Estado _ _ _ _ _ modo temp _) = translate (-(tamJanela / 2 - 10)) (tamJanela / 2 - 20) (scale 0.1 0.1 (text $ printf "%.2f s" temp)) 
+
+
+desenhaComida :: Mundo -> Picture
+desenhaComida (Estado _ _ _ _ (x,y) Jogando _ _) = translate (fromIntegral x * tamSegmt) (fromIntegral y * tamSegmt) $ color red $ circleSolid (tamSegmt / 2 + 1)
+desenhaComida _ = Blank
+
+
+desenhaEstatisticas :: Mundo -> Picture
+desenhaEstatisticas (Estado _ _ _ _ (x,y) GameOver tempo comidas) = 
+  pictures [translate (-150.0) 100.0 (scale 0.4 0.4 (text "Game Over"))
+          , translate (-100.0) 60 (scale 0.2 0.2 (text $ "Tempo: " ++ printf "%.2f s" tempo))
+          , translate (-100.0) 30 (scale 0.2 0.2 (text $ "Comidas: " ++ show comidas))]
+desenhaEstatisticas _ = Blank
 
 
 desenhaCobra :: Mundo -> Picture
@@ -98,15 +113,16 @@ oposto Oeste = Leste
 oposto Parado = Parado
 
 atualizaMundo :: Float -> Mundo -> Mundo
-atualizaMundo deltaT est@(Estado cob dir fra rand com modo temp)
+atualizaMundo deltaT est@(Estado cob dir fra rand com modo temp qtdCom)
     | modo == Inicio && dir /= Parado = est { modo = Jogando, comida = novaComida, randomGen = novoRandom, tempo = temp + deltaT }  
     | modo == Inicio || modo == GameOver = est
-    | modo == Jogando && fra `mod` acaoFrames == 0 = Estado novaCobra dir (fra + 1) novoRandom novaComida modo (temp + deltaT)
+    | modo == Jogando && fra `mod` acaoFrames == 0 = Estado novaCobra dir (fra + 1) novoRandom novaComida modo (temp + deltaT) novoQtdComida
     | modo == Jogando && head novaCobra `elem` tail novaCobra = est { modo = GameOver }
     | otherwise = est {contFrames = fra + 1, tempo = temp + deltaT}
     where
         novaCobra = atualizaCobra cob dir com
         (novaComida, novoRandom) = atualizaComida rand com novaCobra
+        novoQtdComida = if novaComida /= com then qtdCom + 1 else qtdCom
 
 atualizaComida :: StdGen -> Pos -> [Pos] -> (Pos, StdGen)
 atualizaComida g com cob = if com == head cob
@@ -138,6 +154,3 @@ reposicionaCabeca (x,y)
     | otherwise = (x,y)
 
 
-desenhaComida :: Mundo -> Picture
-desenhaComida (Estado _ _ _ _ (x,y) Jogando _) = translate (fromIntegral x * tamSegmt) (fromIntegral y * tamSegmt) $ color red $ circleSolid (tamSegmt / 2 + 1)
-desenhaComida _ = Blank

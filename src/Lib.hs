@@ -22,12 +22,6 @@ data Mundo = Estado {
   , qtdComidas :: Int
 } deriving Show
 
-(+>) :: Pos -> Direcao -> Pos
-(x,y) +> Norte = (x, y + 1)
-(x,y) +> Sul = (x, y - 1)
-(x,y) +> Leste = (x + 1, y)
-(x,y) +> Oeste = (x - 1, y)
-(x,y) +> Parado = (x,y)
 
 mundoInicial :: Mundo
 mundoInicial = Estado {
@@ -40,6 +34,7 @@ mundoInicial = Estado {
   , tempo = 0.0
   , qtdComidas = 0
 }
+
 
 linhas :: Num a => a
 linhas = 39
@@ -66,7 +61,7 @@ desenhaSegmento (x,y) = translate (fromIntegral x * tamSegmt) (fromIntegral y * 
 
 
 desenhaMundo :: Mundo -> Picture
-desenhaMundo m = pictures $ [desenhaComida,  desenhaCobra, desenhaRelogio, desenhaEstatisticas] <*> pure m
+desenhaMundo m = pictures $ sequenceA [desenhaComida,  desenhaCobra, desenhaRelogio, desenhaEstatisticas] m
 
 
 desenhaRelogio :: Mundo -> Picture
@@ -154,3 +149,9 @@ reposicionaCabeca (x,y)
     | otherwise = (x,y)
 
 
+(+>) :: Pos -> Direcao -> Pos
+(x,y) +> Norte = (x, y + 1)
+(x,y) +> Sul = (x, y - 1)
+(x,y) +> Leste = (x + 1, y)
+(x,y) +> Oeste = (x - 1, y)
+(x,y) +> Parado = (x,y)

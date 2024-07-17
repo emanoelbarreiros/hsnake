@@ -61,7 +61,8 @@ desenhaSegmento (x,y) = translate (fromIntegral x * tamSegmt) (fromIntegral y * 
 
 
 desenhaMundo :: Mundo -> Picture
-desenhaMundo m = pictures $ sequenceA [desenhaComida,  desenhaCobra, desenhaRelogio, desenhaEstatisticas] m
+desenhaMundo m = pictures $ [desenhaComida,  desenhaCobra, desenhaRelogio, desenhaEstatisticas] <*> pure m
+
 
 
 desenhaRelogio :: Mundo -> Picture

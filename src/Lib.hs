@@ -53,7 +53,7 @@ tamSegmt = 10
 
 
 acaoFrames :: Num a => a
-acaoFrames = 10
+acaoFrames = 3
 
 
 desenhaSegmento :: Pos -> Picture
@@ -66,7 +66,7 @@ desenhaMundo m = pictures $ [desenhaComida,  desenhaCobra, desenhaRelogio, desen
 
 
 desenhaRelogio :: Mundo -> Picture
-desenhaRelogio (Estado _ _ _ _ _ modo temp _) = translate (-(tamJanela / 2 - 10)) (tamJanela / 2 - 20) (scale 0.1 0.1 (text $ printf "%.2f s" temp)) 
+desenhaRelogio e = translate (-(tamJanela / 2 - 10)) (tamJanela / 2 - 20) (scale 0.1 0.1 (text $ printf "%.2f s" (tempo e))) 
 
 
 desenhaComida :: Mundo -> Picture
